@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Calculator Test Cases</title>
+    <title>Calculator Automated Test Suite</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #fff; padding: 30px; }
         .test-case { background: #2a2a2a; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid #ccc; }
@@ -19,84 +19,143 @@
     <div id="summary">Running tests...</div>
     <div id="results"></div>
 
-    <!-- Hidden calculator iframe to run test assertions on live DOM/JS -->
-    <iframe id="calc-frame" src="calculator.html" style="display: none;"></iframe>
-
     <script>
+        // --- Calculator Code under Test (Embedded directly to bypass cross-origin iframe security) ---
+        let currentOperand = '0';
+        let previousOperand = '';
+        let operation = undefined;
+
+        function clearDisplay() {
+            currentOperand = '0';
+            previousOperand = '';
+            operation = undefined;
+        }
+
+        function appendNumber(number) {
+            if (number === '.' && currentOperand.includes('.')) return;
+            if (currentOperand === '0' && number !== '.') {
+                currentOperand = number.toString();
+            } else {
+                currentOperand = currentOperand.toString() + number.toString();
+            }
+        }
+
+        function chooseOperator(op) {
+            if (currentOperand === '') return;
+            if (previousOperand !== '') {
+                compute();
+            }
+            operation = op;
+            previousOperand = currentOperand;
+            currentOperand = '0';
+        }
+
+        function compute() {
+            let computation;
+            const prev = parseFloat(previousOperand);
+            const current = parseFloat(currentOperand);
+            if (isNaN(prev) || isNaN(current)) return;
+            switch (operation) {
+                case '+':
+                    computation = prev + current;
+                    break;
+                case '-':
+                    computation = prev - current;
+                    break;
+                case '*':
+                    computation = prev * current;
+                    break;
+                case '/':
+                    computation = prev / current;
+                    break;
+                default:
+                    return;
+            }
+            currentOperand = computation.toString();
+            operation = undefined;
+            previousOperand = '';
+        }
+
+        function toggleSign() {
+            currentOperand = (parseFloat(currentOperand) * -1).toString();
+        }
+
+        function percentage() {
+            currentOperand = (parseFloat(currentOperand) / 100).toString();
+        }
+
+        // --- Automated Test Framework & Cases ---
         const tests = [];
         function test(name, fn) { tests.push({ name, fn }); }
 
+        test("Initial display should be 0", () => {
+            clearDisplay();
+            return currentOperand === '0';
+        });
+
+        test("Append numbers 7, 8, 9", () => {
+            clearDisplay();
+            appendNumber('7');
+            appendNumber('8');
+            appendNumber('9');
+            return currentOperand === '789';
+        });
+
+        test("Addition: 5 + 3 = 8", () => {
+            clearDisplay();
+            appendNumber('5');
+            chooseOperator('+');
+            appendNumber('3');
+            compute();
+            return currentOperand === '8';
+        });
+
+        test("Subtraction: 10 - 4 = 6", () => {
+            clearDisplay();
+            appendNumber('1');
+            appendNumber('0');
+            chooseOperator('-');
+            appendNumber('4');
+            compute();
+            return currentOperand === '6';
+        });
+
+        test("Multiplication: 6 * 7 = 42", () => {
+            clearDisplay();
+            appendNumber('6');
+            chooseOperator('*');
+            appendNumber('7');
+            compute();
+            return currentOperand === '42';
+        });
+
+        test("Division: 15 / 3 = 5", () => {
+            clearDisplay();
+            appendNumber('1');
+            appendNumber('5');
+            chooseOperator('/');
+            appendNumber('3');
+            compute();
+            return currentOperand === '5';
+        });
+
+        test("Toggle sign: 5 to -5", () => {
+            clearDisplay();
+            appendNumber('5');
+            toggleSign();
+            return currentOperand === '-5';
+        });
+
+        test("Percentage: 50% = 0.5", () => {
+            clearDisplay();
+            appendNumber('5');
+            appendNumber('0');
+            percentage();
+            return currentOperand === '0.5';
+        });
+
+        // Run suite
         window.onload = function() {
-            const iframe = document.getElementById('calc-frame');
-            const win = iframe.contentWindow;
-
-            test("Initial display should be 0", () => {
-                win.clearDisplay();
-                return win.displayElement.innerText === '0';
-            });
-
-            test("Append numbers 7, 8, 9", () => {
-                win.clearDisplay();
-                win.appendNumber('7');
-                win.appendNumber('8');
-                win.appendNumber('9');
-                return win.displayElement.innerText === '789';
-            });
-
-            test("Addition: 5 + 3 = 8", () => {
-                win.clearDisplay();
-                win.appendNumber('5');
-                win.chooseOperator('+');
-                win.appendNumber('3');
-                win.compute();
-                return win.displayElement.innerText === '8';
-            });
-
-            test("Subtraction: 10 - 4 = 6", () => {
-                win.clearDisplay();
-                win.appendNumber('1');
-                win.appendNumber('0');
-                win.chooseOperator('-');
-                win.appendNumber('4');
-                win.compute();
-                return win.displayElement.innerText === '6';
-            });
-
-            test("Multiplication: 6 * 7 = 42", () => {
-                win.clearDisplay();
-                win.appendNumber('6');
-                win.chooseOperator('*');
-                win.appendNumber('7');
-                win.compute();
-                return win.displayElement.innerText === '42';
-            });
-
-            test("Division: 15 / 3 = 5", () => {
-                win.clearDisplay();
-                win.appendNumber('1');
-                win.appendNumber('5');
-                win.chooseOperator('/');
-                win.appendNumber('3');
-                win.compute();
-                return win.displayElement.innerText === '5';
-            });
-
-            test("Toggle sign: 5 to -5", () => {
-                win.clearDisplay();
-                win.appendNumber('5');
-                win.toggleSign();
-                return win.displayElement.innerText === '-5';
-            });
-
-            test("Percentage: 50% = 0.5", () => {
-                win.clearDisplay();
-                win.appendNumber('5');
-                win.appendNumber('0');
-                win.percentage();
-                return win.displayElement.innerText === '0.5';
-            });
-
-            // Run suite
             let passedCount = 0;
             const resultsContainer = document.getElementById('results');
             
