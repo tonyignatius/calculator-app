@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculator Test Cases</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #fff; padding: 30px; }
+        .test-case { background: #2a2a2a; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid #ccc; }
+        .pass { border-left-color: #2ecc71; }
+        .fail { border-left-color: #e74c3c; }
+        .status { font-weight: bold; margin-left: 10px; }
+        .status.pass-text { color: #2ecc71; }
+        .status.fail-text { color: #e74c3c; }
+        #summary { font-size: 20px; font-weight: bold; margin-bottom: 20px; padding: 15px; border-radius: 8px; background: #333; }
+    </style>
+</head>
+<body>
+    <h1>Calculator Automated Test Suite</h1>
+    <div id="summary">Running tests...</div>
+    <div id="results"></div>
+
+    <!-- Hidden calculator iframe to run test assertions on live DOM/JS -->
+    <iframe id="calc-frame" src="calculator.html" style="display: none;"></iframe>
+
+    <script>
+        const tests = [];
+        function test(name, fn) { tests.push({ name, fn }); }
+
+        window.onload = function() {
+            const iframe = document.getElementById('calc-frame');
+            const win = iframe.contentWindow;
+
+            test("Initial display should be 0", () => {
+                win.clearDisplay();
+                return win.displayElement.innerText === '0';
+            });
+
+            test("Append numbers 7, 8, 9", () => {
+                win.clearDisplay();
+                win.appendNumber('7');
+                win.appendNumber('8');
+                win.appendNumber('9');
+                return win.displayElement.innerText === '789';
+            });
+
+            test("Addition: 5 + 3 = 8", () => {
+                win.clearDisplay();
+                win.appendNumber('5');
+                win.chooseOperator('+');
+                win.appendNumber('3');
+                win.compute();
+                return win.displayElement.innerText === '8';
+            });
+
+            test("Subtraction: 10 - 4 = 6", () => {
+                win.clearDisplay();
+                win.appendNumber('1');
+                win.appendNumber('0');
+                win.chooseOperator('-');
+                win.appendNumber('4');
+                win.compute();
+                return win.displayElement.innerText === '6';
+            });
+
+            test("Multiplication: 6 * 7 = 42", () => {
+                win.clearDisplay();
+                win.appendNumber('6');
+                win.chooseOperator('*');
+                win.appendNumber('7');
+                win.compute();
+                return win.displayElement.innerText === '42';
+            });
+
+            test("Division: 15 / 3 = 5", () => {
+                win.clearDisplay();
+                win.appendNumber('1');
+                win.appendNumber('5');
+                win.chooseOperator('/');
+                win.appendNumber('3');
+                win.compute();
+                return win.displayElement.innerText === '5';
+            });
+
+            test("Toggle sign: 5 to -5", () => {
+                win.clearDisplay();
+                win.appendNumber('5');
+                win.toggleSign();
+                return win.displayElement.innerText === '-5';
+            });
+
+            test("Percentage: 50% = 0.5", () => {
+                win.clearDisplay();
+                win.appendNumber('5');
+                win.appendNumber('0');
+                win.percentage();
+                return win.displayElement.innerText === '0.5';
+            });
+
+            // Run suite
+            let passedCount = 0;
+            const resultsContainer = document.getElementById('results');
+            
+            tests.forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'test-case';
+                let passed = false;
+                try {
+                    passed = t.fn();
+                } catch(e) {
+                    passed = false;
+                }
+
+                if (passed) {
+                    passedCount++;
+                    div.classList.add('pass');
+                    div.innerHTML = `<strong>TEST PASSED:</strong> ${t.name} <span class="status pass-text">[PASS]</span>`;
+                } else {
+                    div.classList.add('fail');
+                    div.innerHTML = `<strong>TEST FAILED:</strong> ${t.name} <span class="status fail-text">[FAIL]</span>`;
+                }
+                resultsContainer.appendChild(div);
+            });
+
+            document.getElementById('summary').innerText = `Results: ${passedCount} / ${tests.length} Passed`;
+        };
+    </script>
+</body>
+</html>
